@@ -1,0 +1,12 @@
+{
+  "name": "youtubeclone",
+  "version": "1.0.0",
+  "description": "This is the personal milestone project which could help me out to learn node.js fundaments.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mohammad Anas",
+  "license": "ISC"
+}
