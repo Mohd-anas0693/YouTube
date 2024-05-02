@@ -165,6 +165,53 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         throw new ApiErrors(401, error?.message || "Invalid Refresh Token");
     }
 });
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+    const { oldPassword, currentPassword } = req.body;
+
+    const isPasswordValid = await User.isPasswordCorrect(oldPassword)
+    if (!isPasswordValid) {
+        throw new ApiErrors(400, "Old Password doesn't match!");
+    };
+    await User.findByIdAndUpdate(req.user._id,
+        {
+            $set: { password: currentPassword }
+        },
+        {
+            new: true
+        });
+    res.status(201).json(new ApiResponse(200, "Password changes Successfully!"));
 
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+});
+const getCurrentUser = asyncHandler(async (req, res) => {
+    if (!req.user) {
+        throw new ApiErrors(400, "No User Found!");
+    }
+    res.status(200).json(new ApiResponse(200, "fetched User Successfully!"))
+});
+const updateUserInfo = asyncHandler(async (req, res) => {
+    const { fullname, email } = req.body;
+    if (!fullname || !email) {
+        throw new ApiErrors(400, "fullname and Email required!");
+    }
+    const user = User.findById(
+        req.user._id,
+        {
+            $set: { fullname, email }
+        },
+        { new: true }
+    ).select("-password -refreshToken");
+    res.
+        status(200)
+        .json(new ApiResponse(200, user, " Account details updated successfully"));
+});
+
+export {
+    registerUser,
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    changeCurrentPassword,
+    getCurrentUser,
+    updateUserInfo,
+};
