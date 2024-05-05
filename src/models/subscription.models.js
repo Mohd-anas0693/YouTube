@@ -6,7 +6,7 @@ const subscriptionScheam = new mongoose.Schema({
         ref: "User"
     },
     channel: {
-        type: mongoose.Schema.Types.ObjecrtId,
+        type: mongoose.Schema.Types.ObjectId,
         ref: "User"
     }
 }, { timestamps: true });
