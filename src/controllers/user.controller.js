@@ -6,7 +6,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 import { unlinkSync } from "fs";
-import { subscribe } from "diagnostics_channel";
+import mongoose from "mongoose";
 
 const generateAccessTokenAndRefreshToken = async (userId) => {
     try {
@@ -188,17 +188,8 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 
 });
 
-const getCurrentUser = asyncHandler(async (req, res) => {
 
-    if (!req.user) {
-        throw new ApiErrors(400, "No User Found!");
-    }
-
-    res.status(200)
-        .json(new ApiResponse(200, "fetched User Successfully!"));
-});
-
-const updateUserInfo = asyncHandler(async (req, res) => {
+const updateAccountDetails = asyncHandler(async (req, res) => {
     const { fullname, email } = req.body;
     if (!fullname || !email) {
         throw new ApiErrors(400, "fullname and Email required!");
@@ -342,6 +333,57 @@ const getChannelProfile = asyncHandler(async (req, res) => {
     res
         .status(200)
         .json(new ApiResponse(200, channel, "Successfully found Channel!"));
+});
+const getWatchHistory = asyncHandler(async (req, res) => {
+    // const user = req.user._id;
+    let watchHistory = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory",
+                pileline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullname: 1,
+                                        username: 1,
+                                        avatar: 1,
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner: {
+                                $first: "$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+    ])
+
+    if (!watchHistory) {
+        throw new ApiErrors(400, "No watch History found!");
+    }
+    res
+        .status(200)
+        .json(new ApiResponse(200, watchHistory, "Sucess! fetched watch history!"));
 })
 
 export {
@@ -350,9 +392,9 @@ export {
     logoutUser,
     refreshAccessToken,
     changeCurrentPassword,
-    getCurrentUser,
-    updateUserInfo,
+    updateAccountDetails,
     updateAvatarImage,
     updateCoverImage,
     getChannelProfile,
+    getWatchHistory
 };
